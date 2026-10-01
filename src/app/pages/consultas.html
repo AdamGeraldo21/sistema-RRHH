@@ -1,0 +1,165 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Análisis</div>
+      <h1>Consulta por criterios</h1>
+      <p>Encuentra candidatos combinando puesto, competencias, capacitaciones, idiomas y más.</p>
+    </div>
+    <button class="btn" type="button" (click)="exportar()" [disabled]="!results().length"><app-icon name="download" [size]="16" /> Exportar CSV</button>
+  </div>
+
+  <div class="layout">
+    <aside class="card card-pad filters">
+      <div class="f-head">
+        <h3><app-icon name="filter" [size]="16" /> Criterios</h3>
+        @if (activeCount()) {
+          <button class="btn btn-sm btn-ghost" type="button" (click)="clear()">Limpiar ({{ activeCount() }})</button>
+        }
+      </div>
+
+      <div class="field">
+        <label for="t">Texto libre</label>
+        <input id="t" class="input" placeholder="Nombre, cédula, recomendado…" [ngModel]="texto()" (ngModelChange)="texto.set($event)" />
+      </div>
+      <div class="field">
+        <label for="p">Puesto</label>
+        <select id="p" class="select" [ngModel]="puesto()" (ngModelChange)="puesto.set(+$event)">
+          <option [value]="0">Cualquiera</option>
+          @for (p of store.puestos.items(); track p.id) {
+            <option [value]="p.id">{{ p.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="d">Departamento</label>
+        <select id="d" class="select" [ngModel]="depto()" (ngModelChange)="depto.set($event)">
+          <option value="">Cualquiera</option>
+          @for (d of departamentos; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <span class="label" style="display: flex; justify-content: space-between; align-items: center">
+          Competencias
+          <span class="seg">
+            <button type="button" [class.on]="modo() === 'alguna'" (click)="modo.set('alguna')">Alguna</button>
+            <button type="button" [class.on]="modo() === 'todas'" (click)="modo.set('todas')">Todas</button>
+          </span>
+        </span>
+        <div class="chips">
+          @for (c of store.competencias.items(); track c.id) {
+            <button type="button" class="chip" [class.on]="comps().includes(c.id)" (click)="toggleComp(c.id)">{{ c.descripcion }}</button>
+          }
+        </div>
+      </div>
+      <div class="field">
+        <label for="n">Nivel de capacitación</label>
+        <select id="n" class="select" [ngModel]="nivel()" (ngModelChange)="nivel.set($event)">
+          <option value="">Cualquiera</option>
+          @for (n of niveles; track n) {
+            <option [value]="n">{{ n }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="c">Capacitación específica</label>
+        <select id="c" class="select" [ngModel]="capacitacion()" (ngModelChange)="capacitacion.set(+$event)">
+          <option [value]="0">Cualquiera</option>
+          @for (c of store.capacitaciones.items(); track c.id) {
+            <option [value]="c.id">{{ c.descripcion }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="i">Idioma</label>
+        <select id="i" class="select" [ngModel]="idioma()" (ngModelChange)="idioma.set(+$event)">
+          <option [value]="0">Cualquiera</option>
+          @for (i of store.idiomas.items(); track i.id) {
+            <option [value]="i.id">{{ i.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="e">Etapa</label>
+        <select id="e" class="select" [ngModel]="etapa()" (ngModelChange)="etapa.set($event)">
+          <option value="">Cualquiera</option>
+          @for (e of etapas; track e) {
+            <option [value]="e">{{ e }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="s">Salario aspirado máximo (RD$)</label>
+        <input id="s" type="number" min="0" step="5000" class="input" placeholder="Sin límite" [ngModel]="salarioMax()" (ngModelChange)="salarioMax.set($event || null)" />
+      </div>
+    </aside>
+
+    <section class="card">
+      <div class="res-head">
+        <h3>Resultados</h3>
+        <span class="count-badge">{{ results().length }} de {{ store.candidatos.items().length }}</span>
+        <div class="active-filters">
+          @if (puesto()) {
+            <span class="tag brand plain">{{ store.puestoNombre(puesto()) }}</span>
+          }
+          @if (depto()) {
+            <span class="tag brand plain">{{ depto() }}</span>
+          }
+          @if (nivel()) {
+            <span class="tag brand plain">{{ nivel() }}</span>
+          }
+          @if (comps().length) {
+            <span class="tag brand plain">{{ comps().length }} competencia(s) · {{ modo() }}</span>
+          }
+        </div>
+      </div>
+      <div class="results">
+        @for (r of results(); track r.c.id) {
+          <article class="rcard">
+            <div class="person">
+              <span class="avatar">{{ r.c.nombre | initials }}</span>
+              <div style="min-width: 0">
+                <div class="name">{{ r.c.nombre }}</div>
+                <div class="meta num">{{ r.c.cedula }}</div>
+              </div>
+              @if (comps().length) {
+                <span class="score">{{ r.match }}/{{ comps().length }} comp.</span>
+              }
+            </div>
+            <dl>
+              <dt>Puesto</dt>
+              <dd>{{ store.puestoNombre(r.c.puestoId) }}</dd>
+              <dt>Departamento</dt>
+              <dd>{{ r.c.departamento }}</dd>
+              <dt>Aspira</dt>
+              <dd class="num">{{ r.c.salarioAspira | money }}</dd>
+              <dt>Etapa</dt>
+              <dd><span class="tag" [class]="tone(r.c.etapa)">{{ r.c.etapa }}</span></dd>
+            </dl>
+            <div class="mini-tags">
+              @for (n of names(r.c.competencias, 'competencias'); track $index) {
+                <span class="tag plain">{{ n }}</span>
+              }
+            </div>
+            <div class="mini-tags">
+              @for (n of names(r.c.capacitaciones, 'capacitaciones'); track $index) {
+                <span class="tag plain info">{{ n }}</span>
+              }
+              @for (n of names(r.c.idiomas, 'idiomas'); track $index) {
+                <span class="tag plain ok">{{ n }}</span>
+              }
+            </div>
+            <a class="btn btn-sm" [routerLink]="['/candidatos']" [queryParams]="{ editar: r.c.id }">Ver perfil <app-icon name="arrow" [size]="14" /></a>
+          </article>
+        } @empty {
+          <div class="empty" style="grid-column: 1 / -1">
+            <div class="empty-icon"><app-icon name="search" [size]="24" /></div>
+            <h4>Ningún candidato cumple los criterios</h4>
+            Prueba quitando algún filtro.
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+</div>

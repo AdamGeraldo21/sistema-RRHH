@@ -1,0 +1,285 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Reclutamiento</div>
+      <h1>Candidatos</h1>
+      <p>Perfiles de los aspirantes con sus competencias, capacitaciones, idiomas y experiencia.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="create()"><app-icon name="plus" /> Nuevo candidato</button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <label class="search">
+        <app-icon name="search" [size]="16" />
+        <input class="input" placeholder="Nombre, cédula, puesto, correo…" [ngModel]="q()" (ngModelChange)="q.set($event)" />
+      </label>
+      <select class="select" [ngModel]="puesto()" (ngModelChange)="puesto.set(+$event)" aria-label="Puesto">
+        <option [value]="0">Todos los puestos</option>
+        @for (p of store.puestos.items(); track p.id) {
+          <option [value]="p.id">{{ p.nombre }}</option>
+        }
+      </select>
+      <select class="select" [ngModel]="etapa()" (ngModelChange)="etapa.set($event)" aria-label="Etapa">
+        <option value="">Todas las etapas</option>
+        @for (e of etapas; track e) {
+          <option [value]="e">{{ e }}</option>
+        }
+      </select>
+      <span class="spacer"></span>
+      <span class="count-badge">{{ rows().length }} candidatos</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Candidato</th>
+            <th>Puesto al que aspira</th>
+            <th class="right">Salario aspirado</th>
+            <th>Competencias</th>
+            <th>Recomendado por</th>
+            <th>Etapa</th>
+            <th class="right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of rows(); track c.id) {
+            <tr class="clickable" (click)="edit(c)">
+              <td>
+                <div class="person">
+                  <span class="avatar">{{ c.nombre | initials }}</span>
+                  <div>
+                    <div class="name">{{ c.nombre }}</div>
+                    <div class="meta num">{{ c.cedula }} · {{ c.fechaPostulacion | fecha }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <strong>{{ store.puestoNombre(c.puestoId) }}</strong>
+                <div class="muted" style="font-size: 12px">{{ c.departamento }}</div>
+              </td>
+              <td class="right num">{{ c.salarioAspira | money }}</td>
+              <td>
+                <div class="mini-tags">
+                  @for (id of c.competencias.slice(0, 2); track id) {
+                    <span class="tag plain">{{ compName(id) }}</span>
+                  }
+                  @if (c.competencias.length > 2) {
+                    <span class="tag plain brand">+{{ c.competencias.length - 2 }}</span>
+                  }
+                </div>
+              </td>
+              <td>{{ c.recomendadoPor || '—' }}</td>
+              <td><span class="tag" [class]="tone(c.etapa)">{{ c.etapa }}</span></td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" type="button" (click)="$event.stopPropagation(); edit(c)" aria-label="Editar"><app-icon name="pencil" [size]="16" /></button>
+                  <button class="icon-btn danger" type="button" (click)="$event.stopPropagation(); remove(c, c.nombre)" aria-label="Eliminar"><app-icon name="trash" [size]="16" /></button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">
+                <div class="empty">
+                  <div class="empty-icon"><app-icon name="users" [size]="24" /></div>
+                  <h4>Sin candidatos</h4>
+                  No hay candidatos que coincidan con los filtros.
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@if (formOpen()) {
+  <app-modal [title]="isNew ? 'Nuevo candidato' : draft.nombre" [eyebrow]="isNew ? 'Registro de candidato' : 'Editar candidato'" [drawer]="true" [wide]="true" (closed)="close()">
+    <form id="f" (ngSubmit)="submit()">
+      <section class="form-section">
+        <h4><app-icon name="idcard" [size]="16" /> Datos personales</h4>
+        <div class="form-grid">
+          <div class="field">
+            <label for="ced">Cédula *</label>
+            <input id="ced" class="input num" name="cedula" placeholder="000-0000000-0" inputmode="numeric" [ngModel]="draft.cedula" (ngModelChange)="onCedula($event)" [class.invalid]="!!cedulaError" />
+            @if (cedulaError) {
+              <span class="hint err">{{ cedulaError }}</span>
+            }
+          </div>
+          <div class="field">
+            <label for="nombre">Nombre completo *</label>
+            <input id="nombre" class="input" name="nombre" [(ngModel)]="draft.nombre" [class.invalid]="submitted && !draft.nombre.trim()" />
+          </div>
+          <div class="field">
+            <label for="email">Correo electrónico</label>
+            <input id="email" type="email" class="input" name="email" [(ngModel)]="draft.email" />
+          </div>
+          <div class="field">
+            <label for="tel">Teléfono</label>
+            <input id="tel" class="input" name="tel" placeholder="809-000-0000" [(ngModel)]="draft.telefono" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h4><app-icon name="briefcase" [size]="16" /> Aspiración</h4>
+        <div class="form-grid">
+          <div class="field">
+            <label for="puesto">Puesto al que aspira *</label>
+            <select id="puesto" class="select" name="puesto" [ngModel]="draft.puestoId" (ngModelChange)="onPuesto($event)" [class.invalid]="submitted && !draft.puestoId">
+              <option [value]="0" disabled>Selecciona un puesto</option>
+              @for (p of store.puestosActivos(); track p.id) {
+                <option [value]="p.id">{{ p.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="depto">Departamento</label>
+            <select id="depto" class="select" name="depto" [(ngModel)]="draft.departamento">
+              <option value="" disabled>Selecciona</option>
+              @for (d of departamentos; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="sal">Salario al que aspira (RD$) *</label>
+            <input id="sal" type="number" min="0" step="1000" class="input" name="sal" [(ngModel)]="draft.salarioAspira" [class.invalid]="submitted && !(draft.salarioAspira > 0)" />
+            @if (rango; as r) {
+              <span class="hint" [class.warn]="draft.salarioAspira > 0 && (draft.salarioAspira < r.min || draft.salarioAspira > r.max)">
+                Banda del puesto: {{ r.min | money }} – {{ r.max | money }}
+                @if (draft.salarioAspira > 0 && (draft.salarioAspira < r.min || draft.salarioAspira > r.max)) {
+                  · fuera de rango
+                }
+              </span>
+            }
+          </div>
+          <div class="field">
+            <label for="rec">Recomendado por</label>
+            <input id="rec" class="input" name="rec" placeholder="Nombre de quien recomienda" [(ngModel)]="draft.recomendadoPor" />
+          </div>
+          <div class="field">
+            <label for="etapa">Etapa del proceso</label>
+            <select id="etapa" class="select" name="etapa" [(ngModel)]="draft.etapa" [disabled]="draft.etapa === 'Contratado'">
+              @for (e of etapas; track e) {
+                <option [value]="e" [disabled]="e === 'Contratado'">{{ e }}</option>
+              }
+            </select>
+            <span class="hint">Para contratar usa el Proceso de selección.</span>
+          </div>
+          <div class="field">
+            <label for="fp">Fecha de postulación</label>
+            <input id="fp" type="date" class="input" name="fp" [(ngModel)]="draft.fechaPostulacion" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h4><app-icon name="sparkles" [size]="16" /> Principales competencias <span class="count">{{ draft.competencias.length }}</span></h4>
+        <div class="chips">
+          @for (c of store.competenciasActivas(); track c.id) {
+            <button type="button" class="chip" [class.on]="draft.competencias.includes(c.id)" (click)="toggle(draft.competencias, c.id)">
+              @if (draft.competencias.includes(c.id)) {
+                <app-icon name="check" [size]="14" />
+              }
+              {{ c.descripcion }} <small>{{ c.tipo }}</small>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h4><app-icon name="cap" [size]="16" /> Principales capacitaciones <span class="count">{{ draft.capacitaciones.length }}</span></h4>
+        <div class="chips">
+          @for (c of store.capacitaciones.items(); track c.id) {
+            <button type="button" class="chip" [class.on]="draft.capacitaciones.includes(c.id)" (click)="toggle(draft.capacitaciones, c.id)">
+              @if (draft.capacitaciones.includes(c.id)) {
+                <app-icon name="check" [size]="14" />
+              }
+              {{ c.descripcion }} <small>{{ c.nivel }}</small>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h4><app-icon name="languages" [size]="16" /> Idiomas <span class="count">{{ draft.idiomas.length }}</span></h4>
+        <div class="chips">
+          @for (i of store.idiomasActivos(); track i.id) {
+            <button type="button" class="chip" [class.on]="draft.idiomas.includes(i.id)" (click)="toggle(draft.idiomas, i.id)">
+              @if (draft.idiomas.includes(i.id)) {
+                <app-icon name="check" [size]="14" />
+              }
+              {{ i.nombre }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h4>
+          <app-icon name="history" [size]="16" /> Experiencia laboral <span class="count">{{ exps.length }}</span>
+          @if (!expDraft) {
+            <button type="button" class="btn btn-sm" style="margin-left: auto" (click)="newExp()"><app-icon name="plus" [size]="14" /> Agregar</button>
+          }
+        </h4>
+        <div class="exp-list">
+          @for (e of exps; track $index; let i = $index) {
+            <div class="exp">
+              <span class="dot"><app-icon name="building" [size]="16" /></span>
+              <div class="body">
+                <strong>{{ e.puesto }} · {{ e.empresa }}</strong>
+                <span class="muted num">{{ e.fechaDesde | fecha }} – {{ e.fechaHasta ? (e.fechaHasta | fecha) : 'Actualidad' }} · {{ e.salario | money }}</span>
+              </div>
+              <button type="button" class="icon-btn" (click)="editExp(i)" aria-label="Editar experiencia"><app-icon name="pencil" [size]="15" /></button>
+              <button type="button" class="icon-btn danger" (click)="removeExp(i)" aria-label="Quitar experiencia"><app-icon name="trash" [size]="15" /></button>
+            </div>
+          } @empty {
+            @if (!expDraft) {
+              <span class="muted">Sin experiencia registrada.</span>
+            }
+          }
+          @if (expDraft; as e) {
+            <div class="exp-form">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="xe">Empresa *</label>
+                  <input id="xe" class="input" name="xe" [(ngModel)]="e.empresa" />
+                </div>
+                <div class="field">
+                  <label for="xp">Puesto ocupado *</label>
+                  <input id="xp" class="input" name="xp" [(ngModel)]="e.puesto" />
+                </div>
+                <div class="field">
+                  <label for="xd">Fecha desde *</label>
+                  <input id="xd" type="date" class="input" name="xd" [(ngModel)]="e.fechaDesde" />
+                </div>
+                <div class="field">
+                  <label for="xh">Fecha hasta</label>
+                  <input id="xh" type="date" class="input" name="xh" [(ngModel)]="e.fechaHasta" />
+                  <span class="hint">Vacío si es el empleo actual.</span>
+                </div>
+                <div class="field">
+                  <label for="xs">Salario (RD$)</label>
+                  <input id="xs" type="number" min="0" step="1000" class="input" name="xs" [(ngModel)]="e.salario" />
+                </div>
+                <div class="field" style="justify-content: flex-end">
+                  <div class="actions" style="justify-content: flex-end">
+                    <button type="button" class="btn btn-sm" (click)="expDraft = null">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="saveExp()"><app-icon name="check" [size]="14" /> Guardar experiencia</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    </form>
+    <ng-container footer>
+      <button class="btn" type="button" (click)="close()">Cancelar</button>
+      <button class="btn btn-primary" type="submit" form="f"><app-icon name="check" [size]="16" /> {{ isNew ? 'Registrar candidato' : 'Guardar cambios' }}</button>
+    </ng-container>
+  </app-modal>
+}

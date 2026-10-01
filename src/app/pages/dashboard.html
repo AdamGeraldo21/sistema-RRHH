@@ -1,0 +1,147 @@
+<div class="page">
+  <section class="hero">
+    <div class="hero-text">
+      <span class="hero-date">{{ hoy }}</span>
+      <h1>{{ saludo }}, equipo de RH 👋</h1>
+      <p>
+        Tienes <strong>{{ kpis().enProceso }} candidatos</strong> en proceso y <strong>{{ kpis().ofertas }} ofertas</strong> pendientes de
+        contratación.
+      </p>
+      <div class="hero-actions">
+        <a class="btn hero-btn" routerLink="/seleccion"><app-icon name="kanban" [size]="16" /> Ir al proceso de selección</a>
+        <a class="btn hero-ghost" routerLink="/candidatos"><app-icon name="plus" [size]="16" /> Registrar candidato</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="orb o1"></div>
+      <div class="orb o2"></div>
+      <div class="glass">
+        <span class="g-label">Nómina mensual</span>
+        <strong class="num">{{ short(kpis().nomina) }}</strong>
+        <span class="g-sub">{{ kpis().empleados }} empleados activos</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid grid-4">
+    <a class="card kpi link" routerLink="/empleados">
+      <div class="kpi-icon"><app-icon name="usercheck" /></div>
+      <div class="label">Empleados activos</div>
+      <div class="value num">{{ kpis().empleados }}</div>
+      <div class="foot">+{{ kpis().nuevosMes }} ingresos este mes</div>
+    </a>
+    <a class="card kpi link" routerLink="/candidatos">
+      <div class="kpi-icon cool"><app-icon name="users" /></div>
+      <div class="label">Candidatos en proceso</div>
+      <div class="value num">{{ kpis().enProceso }}</div>
+      <div class="foot">{{ store.candidatos.items().length }} registrados en total</div>
+    </a>
+    <a class="card kpi link" routerLink="/puestos">
+      <div class="kpi-icon"><app-icon name="briefcase" /></div>
+      <div class="label">Puestos activos</div>
+      <div class="value num">{{ kpis().puestos }}</div>
+      <div class="foot">{{ store.puestos.items().length }} en catálogo</div>
+    </a>
+    <a class="card kpi link" routerLink="/reporte">
+      <div class="kpi-icon cool"><app-icon name="wallet" /></div>
+      <div class="label">Nómina mensual</div>
+      <div class="value num">{{ short(kpis().nomina) }}</div>
+      <div class="foot">{{ kpis().nomina | money }}</div>
+    </a>
+  </div>
+
+  <div class="grid two-one">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Ingresos de personal</h3>
+          <div class="sub">Empleados de nuevo ingreso · últimos 12 meses</div>
+        </div>
+        <a class="btn btn-sm btn-ghost" routerLink="/reporte">Ver reporte <app-icon name="arrow" [size]="14" /></a>
+      </div>
+      <div class="card-pad">
+        <app-bar-chart [data]="ingresos()" unit="ingreso(s)" ariaLabel="Ingresos de personal por mes" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Embudo de selección</h3>
+          <div class="sub">Candidatos por etapa</div>
+        </div>
+      </div>
+      <div class="card-pad hbars">
+        @for (b of embudo(); track b.label) {
+          <div class="hbar">
+            <span class="lbl"><span class="tag" [class]="tone(b.label)">{{ b.label }}</span></span>
+            <span class="track"><span class="fill" [style.width.%]="(b.value / max(embudo())) * 100"></span></span>
+            <span class="val">{{ b.value }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Empleados por departamento</h3>
+          <div class="sub">Solo activos</div>
+        </div>
+      </div>
+      <div class="card-pad hbars">
+        @for (b of porDepto(); track b.label) {
+          <div class="hbar">
+            <span class="lbl" [title]="b.label">{{ b.label }}</span>
+            <span class="track"><span class="fill" [style.width.%]="(b.value / max(porDepto())) * 100"></span></span>
+            <span class="val">{{ b.value }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Competencias más frecuentes</h3>
+          <div class="sub">En perfiles de candidatos</div>
+        </div>
+      </div>
+      <div class="card-pad hbars">
+        @for (b of topComp(); track b.label) {
+          <div class="hbar">
+            <span class="lbl" [title]="b.label">{{ b.label }}</span>
+            <span class="track"><span class="fill" [style.width.%]="(b.value / max(topComp())) * 100"></span></span>
+            <span class="val">{{ b.value }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Postulaciones recientes</h3>
+          <div class="sub">Últimos candidatos registrados</div>
+        </div>
+        <a class="btn btn-sm btn-ghost" routerLink="/candidatos">Todos</a>
+      </div>
+      <ul class="recent">
+        @for (c of recientes(); track c.id) {
+          <li>
+            <a [routerLink]="['/candidatos']" [queryParams]="{ editar: c.id }">
+              <span class="avatar">{{ c.nombre | initials }}</span>
+              <span class="r-body">
+                <strong>{{ c.nombre }}</strong>
+                <small>{{ store.puestoNombre(c.puestoId) }} · {{ c.fechaPostulacion | fecha }}</small>
+              </span>
+              <span class="tag" [class]="tone(c.etapa)">{{ c.etapa }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+</div>

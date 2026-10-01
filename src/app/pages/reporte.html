@@ -1,0 +1,160 @@
+<div class="page">
+  <div class="page-head no-print">
+    <div>
+      <div class="eyebrow">Análisis</div>
+      <h1>Reporte de nuevo ingreso</h1>
+      <p>Empleados que ingresaron a la organización en un rango de fechas.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" type="button" (click)="exportar()" [disabled]="!rows().length"><app-icon name="download" [size]="16" /> CSV</button>
+      <button class="btn btn-primary" type="button" (click)="imprimir()" [disabled]="!rows().length"><app-icon name="printer" [size]="16" /> Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div class="print-only print-head">
+    <h2>Reporte de empleados de nuevo ingreso</h2>
+    <div>Período: {{ fechaLarga(desde()) }} – {{ fechaLarga(hasta()) }} @if (depto()) { · {{ depto() }} } · Generado: {{ generado }}</div>
+  </div>
+
+  <div class="card card-pad no-print">
+    <div class="filters">
+      <div class="field">
+        <label for="desde">Desde</label>
+        <input id="desde" type="date" class="input" [ngModel]="desde()" (ngModelChange)="desde.set($event); preset.set('')" [class.invalid]="rangoInvalido()" />
+      </div>
+      <div class="field">
+        <label for="hasta">Hasta</label>
+        <input id="hasta" type="date" class="input" [ngModel]="hasta()" (ngModelChange)="hasta.set($event); preset.set('')" [class.invalid]="rangoInvalido()" />
+      </div>
+      <div class="field">
+        <label for="dep">Departamento</label>
+        <select id="dep" class="select" [ngModel]="depto()" (ngModelChange)="depto.set($event)">
+          <option value="">Todos</option>
+          @for (d of departamentos; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <span class="label">Rápido</span>
+        <div class="seg presets">
+          <button type="button" [class.on]="preset() === 'mes'" (click)="setPreset('mes')">Este mes</button>
+          <button type="button" [class.on]="preset() === 'trimestre'" (click)="setPreset('trimestre')">Trimestre</button>
+          <button type="button" [class.on]="preset() === 'anio'" (click)="setPreset('anio')">Este año</button>
+          <button type="button" [class.on]="preset() === '12m'" (click)="setPreset('12m')">12 meses</button>
+        </div>
+      </div>
+      <label class="switch" style="height: 42px">
+        <input type="checkbox" [checked]="soloActivos()" (change)="soloActivos.set($any($event.target).checked)" />
+        <span class="track"></span>
+        Solo activos
+      </label>
+    </div>
+    @if (rangoInvalido()) {
+      <p class="hint err" style="margin: 10px 0 0; color: var(--danger)">La fecha "hasta" no puede ser anterior a la fecha "desde".</p>
+    }
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card kpi">
+      <div class="kpi-icon"><app-icon name="usercheck" /></div>
+      <div class="label">Nuevos ingresos</div>
+      <div class="value num">{{ rows().length }}</div>
+      <div class="foot">{{ viaSeleccion() }} vía proceso de selección</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-icon cool"><app-icon name="wallet" /></div>
+      <div class="label">Nómina mensual agregada</div>
+      <div class="value num">{{ total() | money }}</div>
+      <div class="foot">suma de salarios</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-icon"><app-icon name="trending" /></div>
+      <div class="label">Salario promedio</div>
+      <div class="value num">{{ (rows().length ? total() / rows().length : 0) | money }}</div>
+      <div class="foot">por nuevo empleado</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-icon cool"><app-icon name="building" /></div>
+      <div class="label">Departamentos</div>
+      <div class="value num">{{ deptos() }}</div>
+      <div class="foot">con nuevos ingresos</div>
+    </div>
+  </div>
+
+  @if (porMes().length > 1) {
+    <div class="card no-print">
+      <div class="card-head">
+        <div>
+          <h3>Ingresos por mes</h3>
+          <div class="sub">Cantidad de empleados que ingresaron cada mes del período</div>
+        </div>
+      </div>
+      <div class="card-pad">
+        <app-bar-chart [data]="porMes()" unit="ingreso(s)" [height]="200" ariaLabel="Ingresos por mes" />
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    <div class="card-head" style="padding-bottom: 14px">
+      <h3>Detalle de empleados</h3>
+      <span class="count-badge">{{ rows().length }} registros</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Empleado</th>
+            <th>Fecha de ingreso</th>
+            <th>Departamento</th>
+            <th>Puesto</th>
+            <th class="right">Salario mensual</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of rows(); track e.id; let i = $index) {
+            <tr>
+              <td class="muted num">{{ i + 1 }}</td>
+              <td>
+                <div class="person">
+                  <span class="avatar">{{ e.nombre | initials }}</span>
+                  <div>
+                    <div class="name">{{ e.nombre }}</div>
+                    <div class="meta num">{{ e.cedula }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="num">{{ e.fechaIngreso | fecha }}</td>
+              <td>{{ e.departamento }}</td>
+              <td>{{ store.puestoNombre(e.puestoId) }}</td>
+              <td class="right num">{{ e.salario | money }}</td>
+              <td><span class="tag" [class.ok]="e.estado === 'Activo'" [class.bad]="e.estado !== 'Activo'">{{ e.estado }}</span></td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">
+                <div class="empty">
+                  <div class="empty-icon"><app-icon name="calendar" [size]="24" /></div>
+                  <h4>Sin ingresos en este período</h4>
+                  Ajusta el rango de fechas.
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+        @if (rows().length) {
+          <tfoot>
+            <tr>
+              <td colspan="5">Total ({{ rows().length }} empleados)</td>
+              <td class="right num">{{ total() | money }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </div>
+  </div>
+</div>

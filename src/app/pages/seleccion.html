@@ -1,0 +1,136 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Reclutamiento</div>
+      <h1>Proceso de selección</h1>
+      <p>Arrastra a los candidatos entre etapas. Al contratar, el candidato se convierte en empleado.</p>
+    </div>
+    <div class="actions">
+      <label class="search">
+        <app-icon name="search" [size]="16" />
+        <input class="input" placeholder="Filtrar candidatos…" [ngModel]="q()" (ngModelChange)="q.set($event)" />
+      </label>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="num">{{ stats().activos }}</span> en proceso</div>
+    <div class="stat"><span class="num">{{ stats().contratados }}</span> contratados</div>
+    <div class="stat"><span class="num">{{ stats().tasa }}%</span> tasa de contratación</div>
+  </div>
+
+  <div class="board">
+    @for (col of columns(); track col.etapa) {
+      <section
+        class="column"
+        [attr.data-etapa]="col.etapa"
+        [class.over]="overCol() === col.etapa"
+        (dragover)="onDragOver($event, col.etapa)"
+        (dragleave)="overCol.set(null)"
+        (drop)="onDrop($event, col.etapa)"
+      >
+        <header>
+          <span class="col-dot"></span>
+          <h3>{{ col.etapa }}</h3>
+          <span class="col-count">{{ col.items.length }}</span>
+        </header>
+        <div class="col-body">
+          @for (c of col.items; track c.id) {
+            <article
+              class="kcard"
+              [class.dragging]="dragId() === c.id"
+              [class.locked]="c.etapa === 'Contratado'"
+              [attr.draggable]="c.etapa !== 'Contratado'"
+              (dragstart)="onDragStart($event, c)"
+              (dragend)="onDragEnd()"
+            >
+              <div class="k-top">
+                <span class="avatar">{{ c.nombre | initials }}</span>
+                <div class="k-name">
+                  <strong>{{ c.nombre }}</strong>
+                  <span>{{ store.puestoNombre(c.puestoId) }}</span>
+                </div>
+                <button class="icon-btn" type="button" (click)="editar(c)" aria-label="Ver perfil"><app-icon name="pencil" [size]="14" /></button>
+              </div>
+              <div class="mini-tags">
+                @for (n of comps(c); track n) {
+                  <span class="tag plain">{{ n }}</span>
+                }
+              </div>
+              <div class="k-foot">
+                <span class="num salary">{{ c.salarioAspira | money }}</span>
+                <span class="k-actions">
+                  @if (prev(c.etapa); as p) {
+                    <button class="icon-btn" type="button" (click)="move(c, p)" [attr.aria-label]="'Mover a ' + p" [title]="'Mover a ' + p"><app-icon name="chevron-left" [size]="15" /></button>
+                  }
+                  @if (c.etapa !== 'Contratado' && c.etapa !== 'Descartado') {
+                    <button class="icon-btn danger" type="button" (click)="move(c, 'Descartado')" aria-label="Descartar" title="Descartar"><app-icon name="x" [size]="15" /></button>
+                  }
+                  @if (next(c.etapa); as n) {
+                    <button class="icon-btn" type="button" (click)="move(c, n)" [attr.aria-label]="'Mover a ' + n" [title]="'Mover a ' + n"><app-icon name="chevron-right" [size]="15" /></button>
+                  }
+                  @if (c.etapa === 'Contratado') {
+                    <span class="tag ok">Empleado</span>
+                  }
+                </span>
+              </div>
+              @if (c.etapa === 'Oferta') {
+                <button class="btn btn-sm btn-primary hire-btn" type="button" (click)="openHire(c)"><app-icon name="usercheck" [size]="14" /> Contratar como empleado</button>
+              }
+            </article>
+          } @empty {
+            <div class="col-empty">Sin candidatos</div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>
+
+@if (hiring(); as c) {
+  <app-modal title="Contratar candidato" eyebrow="Proceso de selección" (closed)="hiring.set(null)">
+    <div class="hire-head">
+      <span class="avatar lg">{{ c.nombre | initials }}</span>
+      <div>
+        <strong>{{ c.nombre }}</strong>
+        <div class="muted num">{{ c.cedula }} · aspira a {{ c.salarioAspira | money }}</div>
+      </div>
+    </div>
+    <form class="form-grid" id="hire" (ngSubmit)="confirmHire()">
+      <div class="field span-2">
+        <label for="hp">Puesto *</label>
+        <select id="hp" class="select" name="hp" [ngModel]="hire.puestoId" (ngModelChange)="onHirePuesto($event)">
+          @for (p of store.puestosActivos(); track p.id) {
+            <option [value]="p.id">{{ p.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="hd">Departamento</label>
+        <select id="hd" class="select" name="hd" [(ngModel)]="hire.departamento">
+          @for (d of departamentos; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="hf">Fecha de ingreso *</label>
+        <input id="hf" type="date" class="input" name="hf" [(ngModel)]="hire.fechaIngreso" />
+      </div>
+      <div class="field span-2">
+        <label for="hs">Salario mensual (RD$) *</label>
+        <input id="hs" type="number" min="0" step="1000" class="input" name="hs" [(ngModel)]="hire.salario" [class.invalid]="!!hireError" />
+        @if (store.puestos.get(hire.puestoId); as p) {
+          <span class="hint">Banda del puesto: {{ p.salarioMin | money }} – {{ p.salarioMax | money }}</span>
+        }
+        @if (hireError) {
+          <span class="hint err">{{ hireError }}</span>
+        }
+      </div>
+    </form>
+    <ng-container footer>
+      <button class="btn" type="button" (click)="hiring.set(null)">Cancelar</button>
+      <button class="btn btn-primary" type="submit" form="hire" [disabled]="!!hireError"><app-icon name="usercheck" [size]="16" /> Confirmar contratación</button>
+    </ng-container>
+  </app-modal>
+}
