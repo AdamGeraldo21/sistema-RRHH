@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ETAPAS } from '../core/models';
+import { Auth } from '../core/auth';
 import { Store } from '../core/store';
 import { etapaTone, moneyShort } from '../core/util';
 import { BarChart, BarDatum } from '../shared/bar-chart';
@@ -23,6 +24,8 @@ interface HBar {
 export class DashboardPage {
   protected readonly store = inject(Store);
   protected readonly tone = etapaTone;
+  private readonly auth = inject(Auth);
+  protected readonly nombre = computed(() => this.auth.user()?.nombre.split(' ')[0] ?? 'equipo de RH');
   protected readonly short = moneyShort;
 
   protected readonly saludo = (() => {

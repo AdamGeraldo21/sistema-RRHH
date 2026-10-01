@@ -3,6 +3,15 @@
 PWA desarrollada en **Angular 22** para el proyecto final de la asignatura de RH (Universidad APEC).
 Usa datos simulados (mock) que se guardan en el `localStorage` del navegador, así que se puede agregar, editar y eliminar información sin backend.
 
+## Acceso
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador | admin@talenta.do | admin123 |
+| Reclutador | reclutador@talenta.do | demo123 |
+
+También puedes crear una cuenta desde **Crear cuenta** en la pantalla de inicio (rol Reclutador), o un administrador puede crear usuarios con cualquier rol en **Administración → Usuarios**. Las sesiones y cuentas se guardan en el navegador (demo sin backend; las contraseñas se almacenan como hash SHA-256).
+
 ## Módulos
 
 | Módulo | Qué permite |

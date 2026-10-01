@@ -76,6 +76,21 @@ export interface Empleado extends Entity {
   candidatoId?: number;
 }
 
+export type Rol = 'Administrador' | 'Reclutador';
+
+export interface Usuario extends Entity {
+  nombre: string;
+  email: string;
+  /** SHA-256 de `email:contraseña` (demo, sin backend). */
+  passwordHash: string;
+  rol: Rol;
+  estado: Estado;
+  creado: string;
+  ultimoAcceso: string;
+}
+
+export const ROLES: Rol[] = ['Administrador', 'Reclutador'];
+
 export const DEPARTAMENTOS = [
   'Tecnología',
   'Finanzas',

@@ -192,13 +192,103 @@ nav {
   align-items: center;
   gap: 8px;
 }
+.me-wrap {
+  position: relative;
+  padding-left: 12px;
+  margin-left: 4px;
+  border-left: 1px solid var(--border);
+}
 .me {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-left: 12px;
-  margin-left: 4px;
-  border-left: 1px solid var(--border);
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-2);
+  transition: background 0.15s ease;
+}
+.me:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.me-text strong {
+  color: var(--text);
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 61;
+  width: 280px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  animation: rise 0.18s ease both;
+}
+.menu-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 10px 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.menu-head > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.menu-head strong {
+  font-size: 14px;
+}
+.menu-head small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+.menu-item:hover {
+  background: var(--surface-2);
+}
+.menu-item.danger {
+  color: var(--danger);
+}
+.menu-item.danger:hover {
+  background: var(--danger-soft);
 }
 .me .avatar {
   width: 34px;

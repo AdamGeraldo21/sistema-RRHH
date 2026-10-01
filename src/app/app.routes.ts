@@ -1,10 +1,19 @@
 import { Routes } from '@angular/router';
+import { adminGuard, authGuard, guestGuard } from './core/auth';
 import { Shell } from './layout/shell';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    title: 'Iniciar sesión · Talenta RH',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/login').then((m) => m.LoginPage),
+  },
+  {
     path: '',
     component: Shell,
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
@@ -72,6 +81,13 @@ export const routes: Routes = [
         title: 'Reporte de nuevo ingreso · Talenta RH',
         data: { title: 'Reporte de nuevo ingreso' },
         loadComponent: () => import('./pages/reporte').then((m) => m.ReportePage),
+      },
+      {
+        path: 'usuarios',
+        title: 'Usuarios · Talenta RH',
+        data: { title: 'Usuarios' },
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/usuarios').then((m) => m.UsuariosPage),
       },
       { path: '**', redirectTo: 'dashboard' },
     ],

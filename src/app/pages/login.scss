@@ -1,0 +1,323 @@
+.auth {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+/* ---------- Lado de marca ---------- */
+.brand-side {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 56px;
+  color: #fff;
+  background:
+    radial-gradient(700px 400px at 100% 0%, rgba(192, 132, 252, 0.5), transparent 60%),
+    radial-gradient(600px 400px at 0% 100%, rgba(6, 182, 212, 0.35), transparent 60%),
+    linear-gradient(140deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+}
+.b-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 30% 40%, #000, transparent 75%);
+}
+.b-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(4px);
+  animation: float 9s ease-in-out infinite;
+}
+.o1 {
+  width: 280px;
+  height: 280px;
+  right: -60px;
+  top: 12%;
+  background: radial-gradient(circle at 30% 30%, #f0abfc, #8b5cf6 60%, transparent 70%);
+  opacity: 0.55;
+}
+.o2 {
+  width: 200px;
+  height: 200px;
+  left: 8%;
+  bottom: -50px;
+  background: radial-gradient(circle at 30% 30%, #67e8f9, #0891b2 60%, transparent 70%);
+  opacity: 0.45;
+  animation-delay: -4s;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-18px);
+  }
+}
+.b-content {
+  position: relative;
+  max-width: 520px;
+}
+.b-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--grad);
+  box-shadow:
+    0 12px 28px -10px rgba(124, 92, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.brand-side h1 {
+  color: #fff;
+  font-size: 40px;
+  line-height: 1.12;
+  font-weight: 800;
+  margin-top: 40px;
+}
+.brand-side p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 16px;
+  margin: 16px 0 0;
+}
+.b-features {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.b-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.b-features app-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid !important;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.b-card {
+  margin-top: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px);
+}
+.b-card strong {
+  display: block;
+  font-size: 15px;
+}
+.b-card small {
+  color: rgba(255, 255, 255, 0.7);
+}
+.avatars {
+  display: flex;
+}
+.avatars span {
+  width: 34px;
+  height: 34px;
+  margin-left: -8px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--grad-cool);
+  border: 2px solid #3b2a8a;
+}
+.avatars span:first-child {
+  margin-left: 0;
+}
+.avatars span:last-child {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------- Formulario ---------- */
+.form-side {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+.theme {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+.panel {
+  width: min(420px, 100%);
+  animation: rise 0.4s ease both;
+}
+.m-logo {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin-bottom: 28px;
+}
+.m-logo .logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+}
+.panel h2 {
+  font-size: 28px;
+  font-weight: 800;
+}
+.sub {
+  color: var(--text-2);
+  margin: 6px 0 22px;
+}
+.tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.tabs button {
+  flex: 1;
+  height: 38px;
+  font-size: 13.5px;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.with-icon {
+  position: relative;
+}
+.with-icon > app-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.with-icon .input {
+  height: 46px;
+  padding-left: 40px;
+  padding-right: 44px;
+}
+.eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.eye:hover {
+  color: var(--text);
+  background: var(--surface-3);
+}
+.big {
+  height: 48px;
+  font-size: 15px;
+  border-radius: 14px;
+  margin-top: 4px;
+}
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--danger-soft);
+  animation: rise 0.2s ease both;
+}
+.demo {
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.demo-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.demo-acc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.demo-acc:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+.demo-acc .muted {
+  margin-left: auto;
+}
+.foot {
+  margin-top: 24px;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .brand-side {
+    display: none;
+  }
+  .m-logo {
+    display: flex;
+  }
+}
+@media (max-width: 420px) {
+  .demo-acc {
+    flex-wrap: wrap;
+  }
+}

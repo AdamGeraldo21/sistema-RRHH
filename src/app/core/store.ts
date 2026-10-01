@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Candidato, Capacitacion, Competencia, Empleado, Entity, Experiencia, Idioma, Puesto } from './models';
+import { Candidato, Capacitacion, Competencia, Empleado, Entity, Experiencia, Idioma, Puesto, Usuario } from './models';
 import {
+  SEED_USUARIOS,
   SEED_CANDIDATOS,
   SEED_CAPACITACIONES,
   SEED_COMPETENCIAS,
@@ -96,6 +97,8 @@ export class Store {
   readonly candidatos = new Collection<Candidato>('candidatos', SEED_CANDIDATOS);
   readonly experiencias = new Collection<Experiencia>('experiencias', SEED_EXPERIENCIAS);
   readonly empleados = new Collection<Empleado>('empleados', SEED_EMPLEADOS);
+  /** No se incluye en resetAll(): restaurar datos no borra las cuentas creadas. */
+  readonly usuarios = new Collection<Usuario>('usuarios', SEED_USUARIOS);
 
   readonly puestosActivos = computed(() => this.puestos.items().filter((p) => p.estado === 'Activo'));
   readonly competenciasActivas = computed(() => this.competencias.items().filter((c) => c.estado === 'Activo'));

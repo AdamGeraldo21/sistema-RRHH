@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { Auth } from '../core/auth';
 import { Store } from '../core/store';
 import { Icon } from '../shared/icon';
 import { Overlays } from '../shared/overlays';
+import { InitialsPipe } from '../shared/pipes';
 import { Theme, Ui } from '../shared/ui.service';
 
 interface NavItem {
@@ -20,7 +22,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Overlays],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Overlays, InitialsPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:beforeinstallprompt)': 'onInstallPrompt($event)' },
   template: `
@@ -39,7 +41,7 @@ interface BeforeInstallPromptEvent extends Event {
       </a>
 
       <nav>
-        @for (group of nav; track group.title) {
+        @for (group of navGroups(); track group.title) {
           <div class="nav-group">
             <div class="nav-title">{{ group.title }}</div>
             @for (item of group.items; track item.path) {
@@ -80,13 +82,35 @@ interface BeforeInstallPromptEvent extends Event {
           <button class="icon-btn" type="button" (click)="theme.toggle()" [attr.aria-label]="theme.mode() === 'dark' ? 'Modo claro' : 'Modo oscuro'">
             <app-icon [name]="theme.mode() === 'dark' ? 'sun' : 'moon'" />
           </button>
-          <div class="me">
-            <span class="avatar">AG</span>
-            <span class="me-text">
-              <strong>Analista RH</strong>
-              <small>Administrador</small>
-            </span>
-          </div>
+          @if (auth.user(); as u) {
+            <div class="me-wrap">
+              <button class="me" type="button" (click)="userMenu.set(!userMenu())" [attr.aria-expanded]="userMenu()" aria-haspopup="menu">
+                <span class="avatar">{{ u.nombre | initials }}</span>
+                <span class="me-text">
+                  <strong>{{ u.nombre }}</strong>
+                  <small>{{ u.rol }}</small>
+                </span>
+                <app-icon name="chevron-down" [size]="15" />
+              </button>
+              @if (userMenu()) {
+                <div class="menu-scrim" (click)="userMenu.set(false)"></div>
+                <div class="menu" role="menu">
+                  <div class="menu-head">
+                    <span class="avatar lg">{{ u.nombre | initials }}</span>
+                    <div>
+                      <strong>{{ u.nombre }}</strong>
+                      <small>{{ u.email }}</small>
+                      <span class="tag brand plain">{{ u.rol }}</span>
+                    </div>
+                  </div>
+                  @if (auth.isAdmin()) {
+                    <a class="menu-item" role="menuitem" routerLink="/usuarios" (click)="userMenu.set(false)"><app-icon name="users" [size]="16" /> Gestionar usuarios</a>
+                  }
+                  <button class="menu-item danger" role="menuitem" type="button" (click)="logout()"><app-icon name="logout" [size]="16" /> Cerrar sesión</button>
+                </div>
+              }
+            </div>
+          }
         </div>
       </header>
       <main class="content">
@@ -104,7 +128,9 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  protected readonly auth = inject(Auth);
   protected readonly menuOpen = signal(false);
+  protected readonly userMenu = signal(false);
   protected readonly installEvt = signal<BeforeInstallPromptEvent | null>(null);
 
   private readonly enProceso = computed(
@@ -139,6 +165,27 @@ export class Shell {
       ],
     },
   ];
+
+  protected readonly navGroups = computed(() =>
+    this.auth.isAdmin()
+      ? [...this.nav, { title: 'Administración', items: [{ path: '/usuarios', label: 'Usuarios', icon: 'shield' }] }]
+      : this.nav,
+  );
+
+  protected async logout(): Promise<void> {
+    this.userMenu.set(false);
+    const ok = await this.ui.confirm({
+      title: 'Cerrar sesión',
+      message: '¿Deseas cerrar tu sesión en Talenta RH?',
+      confirmText: 'Cerrar sesión',
+      danger: false,
+    });
+    if (!ok) return;
+    const nombre = this.auth.user()?.nombre.split(' ')[0] ?? '';
+    this.auth.logout();
+    await this.router.navigateByUrl('/login');
+    this.ui.info('Sesión cerrada', `Hasta pronto, ${nombre}.`);
+  }
 
   protected readonly section = toSignal(
     this.router.events.pipe(

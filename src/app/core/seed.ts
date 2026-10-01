@@ -1,5 +1,29 @@
-import { Candidato, Capacitacion, Competencia, Empleado, Experiencia, Idioma, Puesto } from './models';
+import { Candidato, Capacitacion, Competencia, Empleado, Experiencia, Idioma, Puesto, Usuario } from './models';
 import { makeCedula } from './util';
+
+/** Credenciales demo: admin@talenta.do / admin123 · reclutador@talenta.do / demo123 */
+export const SEED_USUARIOS: Usuario[] = [
+  {
+    id: 1,
+    nombre: 'Adam Geraldo',
+    email: 'admin@talenta.do',
+    passwordHash: '075a4aa3a35fbcb2765040ef1ffe875fbf359aeb2eb3010b3526c3e26d6135da',
+    rol: 'Administrador',
+    estado: 'Activo',
+    creado: '2026-01-05',
+    ultimoAcceso: '',
+  },
+  {
+    id: 2,
+    nombre: 'Ana Taveras',
+    email: 'reclutador@talenta.do',
+    passwordHash: '27362c771dc580f457787afd1352535b74e25947978c4da9aad0a23f3a583011',
+    rol: 'Reclutador',
+    estado: 'Activo',
+    creado: '2026-03-12',
+    ultimoAcceso: '',
+  },
+];
 
 export const SEED_COMPETENCIAS: Competencia[] = [
   { id: 1, descripcion: 'Trabajo en equipo', tipo: 'Organizacional', estado: 'Activo' },

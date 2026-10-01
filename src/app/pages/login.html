@@ -1,0 +1,145 @@
+<div class="auth">
+  <section class="brand-side" aria-hidden="true">
+    <div class="b-grid"></div>
+    <div class="b-orb o1"></div>
+    <div class="b-orb o2"></div>
+    <div class="b-content">
+      <div class="b-logo">
+        <span class="logo">
+          <svg viewBox="0 0 32 32" width="24" height="24">
+            <circle cx="16" cy="10" r="5" fill="#fff" />
+            <path d="M6 27c0-5.5 4.5-9 10-9s10 3.5 10 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+          </svg>
+        </span>
+        <strong>Talenta RH</strong>
+      </div>
+      <h1>Recluta, selecciona y contrata al mejor talento.</h1>
+      <p>Gestiona candidatos, puestos y competencias, y convierte a los mejores perfiles en empleados en un solo lugar.</p>
+      <ul class="b-features">
+        <li><app-icon name="kanban" [size]="18" /> Proceso de selección visual por etapas</li>
+        <li><app-icon name="search" [size]="18" /> Consultas por competencias, puestos y capacitaciones</li>
+        <li><app-icon name="report" [size]="18" /> Reportes de nuevo ingreso por rango de fechas</li>
+      </ul>
+      <div class="b-card">
+        <div class="avatars">
+          <span>VM</span><span>JP</span><span>CR</span><span>+9</span>
+        </div>
+        <div>
+          <strong>12 candidatos</strong>
+          <small>en proceso de selección</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-side">
+    <button class="icon-btn theme" type="button" (click)="theme.toggle()" [attr.aria-label]="theme.mode() === 'dark' ? 'Modo claro' : 'Modo oscuro'">
+      <app-icon [name]="theme.mode() === 'dark' ? 'sun' : 'moon'" />
+    </button>
+
+    <div class="panel">
+      <div class="m-logo">
+        <span class="logo">
+          <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+            <circle cx="16" cy="10" r="5" fill="#fff" />
+            <path d="M6 27c0-5.5 4.5-9 10-9s10 3.5 10 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+          </svg>
+        </span>
+        <strong>Talenta RH</strong>
+      </div>
+
+      <h2>{{ modo() === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta' }}</h2>
+      <p class="sub">{{ modo() === 'login' ? 'Inicia sesión para continuar al sistema.' : 'Regístrate para acceder como reclutador.' }}</p>
+
+      <div class="seg tabs">
+        <button type="button" [class.on]="modo() === 'login'" (click)="cambiar('login')">Iniciar sesión</button>
+        <button type="button" [class.on]="modo() === 'registro'" (click)="cambiar('registro')">Crear cuenta</button>
+      </div>
+
+      @if (error()) {
+        <div class="alert" role="alert"><app-icon name="alert" [size]="16" /> {{ error() }}</div>
+      }
+
+      @if (modo() === 'login') {
+        <form class="stack" (ngSubmit)="entrar()">
+          <div class="field">
+            <label for="em">Correo electrónico</label>
+            <div class="with-icon">
+              <app-icon name="mail" [size]="16" />
+              <input id="em" type="email" class="input" name="email" autocomplete="username" placeholder="tu@empresa.com" [(ngModel)]="email" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="pw">Contraseña</label>
+            <div class="with-icon">
+              <app-icon name="lock" [size]="16" />
+              <input id="pw" class="input" name="password" autocomplete="current-password" placeholder="••••••••" [type]="verPass() ? 'text' : 'password'" [(ngModel)]="password" />
+              <button type="button" class="eye" (click)="verPass.set(!verPass())" [attr.aria-label]="verPass() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <app-icon [name]="verPass() ? 'eyeoff' : 'eye'" [size]="16" />
+              </button>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="remember" [(ngModel)]="remember" />
+            <span class="track"></span>
+            Mantener sesión iniciada
+          </label>
+          <button class="btn btn-primary big" type="submit" [disabled]="cargando()">
+            <app-icon name="login" [size]="17" /> {{ cargando() ? 'Verificando…' : 'Iniciar sesión' }}
+          </button>
+        </form>
+
+        <div class="demo">
+          <span class="demo-title"><app-icon name="key" [size]="14" /> Cuentas de demostración</span>
+          @for (d of demos; track d.email) {
+            <button type="button" class="demo-acc" (click)="usarDemo(d)">
+              <span class="tag brand plain">{{ d.rol }}</span>
+              <span class="num">{{ d.email }}</span>
+              <span class="muted num">{{ d.pass }}</span>
+            </button>
+          }
+        </div>
+      } @else {
+        <form class="stack" (ngSubmit)="registrar()">
+          <div class="field">
+            <label for="rn">Nombre completo</label>
+            <div class="with-icon">
+              <app-icon name="user" [size]="16" />
+              <input id="rn" class="input" name="nombre" autocomplete="name" placeholder="Nombre y apellido" [(ngModel)]="nombre" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="re">Correo electrónico</label>
+            <div class="with-icon">
+              <app-icon name="mail" [size]="16" />
+              <input id="re" type="email" class="input" name="email" autocomplete="email" placeholder="tu@empresa.com" [(ngModel)]="regEmail" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="rp">Contraseña</label>
+            <div class="with-icon">
+              <app-icon name="lock" [size]="16" />
+              <input id="rp" class="input" name="pass" autocomplete="new-password" placeholder="Mínimo 6 caracteres" [type]="verPass() ? 'text' : 'password'" [(ngModel)]="regPass" />
+              <button type="button" class="eye" (click)="verPass.set(!verPass())" [attr.aria-label]="verPass() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <app-icon [name]="verPass() ? 'eyeoff' : 'eye'" [size]="16" />
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rp2">Confirmar contraseña</label>
+            <div class="with-icon">
+              <app-icon name="lock" [size]="16" />
+              <input id="rp2" class="input" name="pass2" autocomplete="new-password" placeholder="Repite la contraseña" [type]="verPass() ? 'text' : 'password'" [(ngModel)]="regPass2" />
+            </div>
+          </div>
+          <button class="btn btn-primary big" type="submit" [disabled]="cargando()">
+            <app-icon name="userplus" [size]="17" /> {{ cargando() ? 'Creando cuenta…' : 'Crear cuenta' }}
+          </button>
+        </form>
+      }
+
+      <p class="foot muted">Demo con datos simulados · las cuentas se guardan en este navegador.</p>
+    </div>
+  </section>
+</div>
+<app-overlays />
