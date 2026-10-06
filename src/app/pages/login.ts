@@ -38,6 +38,25 @@ export class LoginPage {
     { rol: 'Reclutador', email: 'reclutador@talenta.do', pass: 'demo123' },
   ];
 
+  /** true si la petición tarda (p. ej. el servidor gratuito de Render está despertando). */
+  readonly lento = signal(false);
+  private lentoTimer?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.has('expirada')) this.error.set('Tu sesión expiró. Inicia sesión nuevamente.');
+  }
+
+  private empezar(): void {
+    this.cargando.set(true);
+    this.lentoTimer = setTimeout(() => this.lento.set(true), 4000);
+  }
+
+  private terminar(): void {
+    clearTimeout(this.lentoTimer);
+    this.cargando.set(false);
+    this.lento.set(false);
+  }
+
   protected cambiar(m: 'login' | 'registro'): void {
     this.modo.set(m);
     this.error.set(null);
@@ -54,9 +73,9 @@ export class LoginPage {
       this.error.set('Ingresa tu correo y contraseña.');
       return;
     }
-    this.cargando.set(true);
+    this.empezar();
     const err = await this.auth.login(this.email, this.password, this.remember);
-    this.cargando.set(false);
+    this.terminar();
     if (err) {
       this.error.set(err);
       return;
@@ -70,9 +89,9 @@ export class LoginPage {
       this.error.set('Las contraseñas no coinciden.');
       return;
     }
-    this.cargando.set(true);
+    this.empezar();
     const err = await this.auth.register(this.nombre, this.regEmail, this.regPass);
-    this.cargando.set(false);
+    this.terminar();
     if (err) {
       this.error.set(err);
       return;

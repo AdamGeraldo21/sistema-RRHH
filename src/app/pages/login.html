@@ -138,7 +138,10 @@
         </form>
       }
 
-      <p class="foot muted">Demo con datos simulados · las cuentas se guardan en este navegador.</p>
+      @if (lento()) {
+        <p class="slow"><span class="mini-spin"></span> Despertando el servidor… la primera conexión puede tardar hasta un minuto.</p>
+      }
+      <p class="foot muted">Datos almacenados en PostgreSQL · Render</p>
     </div>
   </section>
 </div>

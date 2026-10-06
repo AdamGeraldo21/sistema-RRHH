@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { Auth } from '../core/auth';
-import { Store } from '../core/store';
+import { Store, apiError } from '../core/store';
 import { Icon } from '../shared/icon';
 import { Overlays } from '../shared/overlays';
 import { InitialsPipe } from '../shared/pipes';
@@ -58,9 +58,19 @@ interface BeforeInstallPromptEvent extends Event {
       </nav>
 
       <div class="side-card">
-        <div class="sc-title"><app-icon name="shield" [size]="16" /> Modo demostración</div>
-        <p>Los datos son simulados y se guardan en este navegador.</p>
-        <button class="btn btn-sm" type="button" (click)="resetData()"><app-icon name="refresh" [size]="14" /> Restaurar datos</button>
+        <div class="sc-title"><span class="db-dot" [class.down]="store.status() === 'error'"></span> PostgreSQL · Render</div>
+        <p>
+          @switch (store.status()) {
+            @case ('ready') { Conectado. Los datos se comparten entre todos los usuarios. }
+            @case ('error') { Sin conexión con el servidor. }
+            @default { Conectando con la base de datos… }
+          }
+        </p>
+        @if (auth.isAdmin()) {
+          <button class="btn btn-sm" type="button" (click)="resetData()" [disabled]="store.status() === 'loading'">
+            <app-icon name="refresh" [size]="14" /> Restaurar datos demo
+          </button>
+        }
       </div>
     </aside>
     @if (menuOpen()) {
@@ -114,7 +124,26 @@ interface BeforeInstallPromptEvent extends Event {
         </div>
       </header>
       <main class="content">
-        <router-outlet />
+        @switch (store.status()) {
+          @case ('ready') {
+            <router-outlet />
+          }
+          @case ('error') {
+            <div class="card state">
+              <span class="state-icon bad"><app-icon name="alert" [size]="26" /></span>
+              <h2>No se pudo cargar la información</h2>
+              <p>{{ store.loadError() }}</p>
+              <button class="btn btn-primary" type="button" (click)="cargar()"><app-icon name="refresh" [size]="16" /> Reintentar</button>
+            </div>
+          }
+          @default {
+            <div class="card state">
+              <span class="spinner" aria-hidden="true"></span>
+              <h2>Conectando con la base de datos…</h2>
+              <p>Si el servidor estaba inactivo, Render puede tardar hasta un minuto en despertarlo.</p>
+            </div>
+          }
+        }
       </main>
     </div>
     <app-overlays />
@@ -124,11 +153,19 @@ interface BeforeInstallPromptEvent extends Event {
 export class Shell {
   protected readonly theme = inject(Theme);
   private readonly ui = inject(Ui);
-  private readonly store = inject(Store);
+  protected readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly auth = inject(Auth);
+
+  constructor() {
+    if (this.store.status() !== 'ready') this.cargar();
+  }
+
+  protected cargar(): void {
+    this.store.loadAll(this.auth.isAdmin());
+  }
   protected readonly menuOpen = signal(false);
   protected readonly userMenu = signal(false);
   protected readonly installEvt = signal<BeforeInstallPromptEvent | null>(null);
@@ -214,12 +251,16 @@ export class Shell {
   protected async resetData(): Promise<void> {
     const ok = await this.ui.confirm({
       title: 'Restaurar datos de demostración',
-      message: 'Se perderán todos los cambios realizados y se cargarán los datos iniciales.',
+      message: 'Se borrarán los datos de RH de la base de datos (para todos los usuarios) y se cargarán los datos iniciales. Las cuentas de usuario no se modifican.',
       confirmText: 'Restaurar',
     });
     if (!ok) return;
-    this.store.resetAll();
     this.menuOpen.set(false);
-    this.ui.success('Datos restaurados', 'Se cargaron nuevamente los datos de demostración.');
+    try {
+      await this.store.resetAll();
+      this.ui.success('Datos restaurados', 'Se cargaron nuevamente los datos de demostración en la base de datos.');
+    } catch (err) {
+      this.ui.error('No se pudieron restaurar los datos', apiError(err));
+    }
   }
 }

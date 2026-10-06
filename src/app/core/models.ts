@@ -81,12 +81,10 @@ export type Rol = 'Administrador' | 'Reclutador';
 export interface Usuario extends Entity {
   nombre: string;
   email: string;
-  /** SHA-256 de `email:contraseña` (demo, sin backend). */
-  passwordHash: string;
   rol: Rol;
   estado: Estado;
   creado: string;
-  ultimoAcceso: string;
+  ultimoAcceso: string | null;
 }
 
 export const ROLES: Rol[] = ['Administrador', 'Reclutador'];

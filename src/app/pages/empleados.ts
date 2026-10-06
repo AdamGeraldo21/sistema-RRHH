@@ -1,6 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DEPARTAMENTOS, Empleado } from '../core/models';
+import { apiError } from '../core/store';
 import { cedulaValida, formatCedula, matches, today } from '../core/util';
 import { CrudPage } from '../shared/crud-page';
 import { Icon } from '../shared/icon';
@@ -98,7 +99,7 @@ import { FechaPipe, InitialsPipe, MoneyPipe } from '../shared/pipes';
                   <td class="right num">{{ e.salario | money }}</td>
                   <td>
                     <label class="switch" [attr.aria-label]="'Estado de ' + e.nombre">
-                      <input type="checkbox" [checked]="e.estado === 'Activo'" (change)="toggleEstado(e)" />
+                      <input type="checkbox" [checked]="e.estado === 'Activo'" (change)="toggleEstado(e, $any($event.target))" />
                       <span class="track"></span>
                       <span class="tag" [class.ok]="e.estado === 'Activo'" [class.bad]="e.estado !== 'Activo'">{{ e.estado }}</span>
                     </label>
@@ -181,7 +182,7 @@ import { FechaPipe, InitialsPipe, MoneyPipe } from '../shared/pipes';
         </form>
         <ng-container footer>
           <button class="btn" type="button" (click)="close()">Cancelar</button>
-          <button class="btn btn-primary" type="submit" form="f"><app-icon name="check" [size]="16" /> Guardar</button>
+          <button class="btn btn-primary" type="submit" form="f" [disabled]="saving()"><app-icon name="check" [size]="16" /> Guardar</button>
         </ng-container>
       </app-modal>
     }
@@ -231,10 +232,15 @@ export class EmpleadosPage extends CrudPage<Empleado> {
     if (p) this.draft.departamento = p.departamento;
   }
 
-  protected toggleEstado(e: Empleado): void {
+  protected async toggleEstado(e: Empleado, input: HTMLInputElement): Promise<void> {
     const estado = e.estado === 'Activo' ? 'Inactivo' : 'Activo';
-    this.col.patch(e.id, { estado });
-    this.ui.info(`${e.nombre}`, `Estado cambiado a ${estado}.`);
+    try {
+      await this.col.patch(e.id, { estado });
+      this.ui.info(`${e.nombre}`, `Estado cambiado a ${estado}.`);
+    } catch (err) {
+      input.checked = e.estado === 'Activo';
+      this.ui.error('No se pudo cambiar el estado', apiError(err));
+    }
   }
 
   protected blank(): Empleado {

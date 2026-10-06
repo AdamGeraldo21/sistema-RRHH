@@ -1,0 +1,21 @@
+# Blueprint de Render para la API de Talenta RH.
+# Render → New → Blueprint → selecciona este repositorio.
+# Usa la misma región que tu base de datos para que la URL interna funcione.
+services:
+  - type: web
+    name: talenta-rh-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # pega la "Internal Database URL" de tu Postgres de Render
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://sistema-rrhh-mu.vercel.app,http://localhost:4200

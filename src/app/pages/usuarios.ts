@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Auth, hashPassword } from '../core/auth';
+import { Auth } from '../core/auth';
 import { ROLES, Usuario } from '../core/models';
 import { matches, today } from '../core/util';
 import { CrudPage } from '../shared/crud-page';
@@ -110,7 +110,7 @@ import { FechaPipe, InitialsPipe } from '../shared/pipes';
             <label for="email">Correo electrónico *</label>
             <input id="email" type="email" class="input" name="email" autocomplete="off" [(ngModel)]="draft.email" />
             @if (!isNew) {
-              <span class="hint">Si cambias el correo, también debes indicar una nueva contraseña.</span>
+              <span class="hint">Deja la contraseña vacía para mantener la actual.</span>
             }
           </div>
           <div class="field">
@@ -143,7 +143,7 @@ import { FechaPipe, InitialsPipe } from '../shared/pipes';
         </form>
         <ng-container footer>
           <button class="btn" type="button" (click)="close()">Cancelar</button>
-          <button class="btn btn-primary" type="submit" form="f"><app-icon name="check" [size]="16" /> Guardar</button>
+          <button class="btn btn-primary" type="submit" form="f" [disabled]="saving()"><app-icon name="check" [size]="16" /> Guardar</button>
         </ng-container>
       </app-modal>
     }
@@ -157,7 +157,6 @@ export class UsuariosPage extends CrudPage<Usuario> {
   readonly rol = signal('');
   pass = '';
   pass2 = '';
-  private originalEmail = '';
 
   protected readonly rows = computed(() =>
     this.col.items().filter((u) => (!this.rol() || u.rol === this.rol()) && matches(this.q(), u.nombre, u.email)),
@@ -167,7 +166,7 @@ export class UsuariosPage extends CrudPage<Usuario> {
     return !!this.draft?.id && this.draft.id === this.auth.user()?.id;
   }
 
-  protected acceso(iso: string): string {
+  protected acceso(iso: string | null): string {
     if (!iso) return 'Nunca';
     return new Date(iso).toLocaleString('es-DO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
@@ -175,27 +174,23 @@ export class UsuariosPage extends CrudPage<Usuario> {
   override create(): void {
     super.create();
     this.pass = this.pass2 = '';
-    this.originalEmail = '';
   }
 
   override edit(u: Usuario): void {
     super.edit(u);
     this.pass = this.pass2 = '';
-    this.originalEmail = u.email;
   }
 
   protected blank(): Usuario {
-    return { id: 0, nombre: '', email: '', passwordHash: '', rol: 'Reclutador', estado: 'Activo', creado: today(), ultimoAcceso: '' };
+    return { id: 0, nombre: '', email: '', rol: 'Reclutador', estado: 'Activo', creado: today(), ultimoAcceso: null };
   }
 
   protected override validate(d: Usuario): string | null {
     const err = this.auth.validar({ id: d.id, nombre: d.nombre, email: d.email, password: this.pass });
     if (err) return err;
     if (this.pass !== this.pass2) return 'Las contraseñas no coinciden.';
-    // El hash depende del correo: si cambia, se necesita la contraseña para recalcularlo.
-    if (d.id && d.email.trim().toLowerCase() !== this.originalEmail.toLowerCase() && !this.pass) {
-      return 'Al cambiar el correo debes indicar una nueva contraseña.';
-    }
+    const correo = d.email.trim().toLowerCase();
+    if (this.col.items().some((u) => u.id !== d.id && u.email.toLowerCase() === correo)) return 'Ya existe una cuenta con ese correo.';
     const quedanAdmins = this.col
       .items()
       .some((u) => u.id !== d.id && u.rol === 'Administrador' && u.estado === 'Activo');
@@ -203,20 +198,9 @@ export class UsuariosPage extends CrudPage<Usuario> {
     return null;
   }
 
-  override async submit(): Promise<void> {
-    this.submitted = true;
-    const error = this.validate(this.draft);
-    if (error) {
-      this.ui.error('Revisa el formulario', error);
-      return;
-    }
-    this.draft.email = this.draft.email.trim().toLowerCase();
-    this.draft.nombre = this.draft.nombre.trim();
-    if (this.pass) this.draft.passwordHash = await hashPassword(this.draft.email, this.pass);
-    const isNew = this.isNew;
-    this.col.save(this.draft);
-    this.ui.success(`Usuario ${isNew ? 'creado' : 'actualizado'}`, isNew ? `${this.draft.email} ya puede iniciar sesión.` : 'Los cambios se guardaron correctamente.');
-    this.formOpen.set(false);
+  /** La contraseña viaja al servidor, que la guarda cifrada con bcrypt. */
+  protected override persist(u: Usuario): Promise<Usuario> {
+    return this.store.saveUsuario(u, this.pass);
   }
 
   protected override blockRemove(u: Usuario): string | null {

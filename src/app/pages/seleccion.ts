@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Candidato, DEPARTAMENTOS, ETAPAS, Etapa } from '../core/models';
-import { HireData, Store } from '../core/store';
+import { HireData, Store, apiError } from '../core/store';
 import { matches, today } from '../core/util';
 import { Icon } from '../shared/icon';
 import { Modal } from '../shared/overlays';
@@ -29,6 +29,7 @@ export class SeleccionPage {
   readonly overCol = signal<Etapa | null>(null);
 
   readonly hiring = signal<Candidato | null>(null);
+  readonly saving = signal(false);
   hire: HireData = { fechaIngreso: '', puestoId: 0, departamento: '', salario: 0 };
 
   protected readonly columns = computed(() => {
@@ -72,8 +73,10 @@ export class SeleccionPage {
       this.openHire(c);
       return;
     }
-    this.store.candidatos.patch(c.id, { etapa });
-    this.ui.info(c.nombre, `Movido a ${etapa}.`);
+    this.store
+      .moverEtapa(c.id, etapa)
+      .then(() => this.ui.info(c.nombre, `Movido a ${etapa}.`))
+      .catch((err) => this.ui.error('No se pudo mover', apiError(err)));
   }
 
   protected editar(c: Candidato): void {
@@ -130,20 +133,27 @@ export class SeleccionPage {
     if (!this.hire.fechaIngreso) return 'Indica la fecha de ingreso.';
     if (!(this.hire.salario > 0)) return 'Indica el salario mensual.';
     if (this.hire.salario < p.salarioMin || this.hire.salario > p.salarioMax) return 'El salario debe estar dentro de la banda del puesto.';
-    if (this.store.empleados.items().some((e) => e.cedula === c.cedula && e.estado === 'Activo')) return 'Ya existe un empleado activo con esta cédula.';
+    if (this.store.empleados.items().some((e) => e.cedula === c.cedula)) return 'Ya existe un empleado con esta cédula.';
     return null;
   }
 
-  protected confirmHire(): void {
+  protected async confirmHire(): Promise<void> {
     const c = this.hiring();
-    if (!c) return;
+    if (!c || this.saving()) return;
     const err = this.hireError;
     if (err) {
       this.ui.error('No se puede contratar', err);
       return;
     }
-    const emp = this.store.contratar(c.id, this.hire);
-    this.hiring.set(null);
-    this.ui.success('¡Candidato contratado!', `${emp.nombre} ahora es empleado (#${emp.id}).`);
+    this.saving.set(true);
+    try {
+      const emp = await this.store.contratar(c.id, this.hire);
+      this.hiring.set(null);
+      this.ui.success('¡Candidato contratado!', `${emp.nombre} ahora es empleado (#${emp.id}).`);
+    } catch (e) {
+      this.ui.error('No se pudo contratar', apiError(e));
+    } finally {
+      this.saving.set(false);
+    }
   }
 }

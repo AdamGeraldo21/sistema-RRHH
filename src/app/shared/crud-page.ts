@@ -1,6 +1,6 @@
 import { Directive, inject, signal } from '@angular/core';
 import { Entity } from '../core/models';
-import { Collection, Store } from '../core/store';
+import { Collection, Store, apiError } from '../core/store';
 import { Ui } from './ui.service';
 
 /** Comportamiento común de las pantallas de mantenimiento (agregar / editar / eliminar). */
@@ -16,12 +16,14 @@ export abstract class CrudPage<T extends Entity> {
 
   readonly q = signal('');
   readonly formOpen = signal(false);
+  /** true mientras se envía el formulario al servidor. */
+  readonly saving = signal(false);
   draft!: T;
   submitted = false;
 
   protected abstract blank(): T;
 
-  /** Devuelve un mensaje de error o null si el borrador es válido. */
+  /** Validación rápida en el cliente: devuelve un mensaje de error o null. El servidor vuelve a validar. */
   protected validate(_draft: T): string | null {
     return null;
   }
@@ -31,7 +33,10 @@ export abstract class CrudPage<T extends Entity> {
     return null;
   }
 
-  protected afterSave(_saved: T, _isNew: boolean): void {}
+  /** Envía el borrador a la API. */
+  protected persist(draft: T): Promise<T> {
+    return this.col.save(draft);
+  }
 
   get isNew(): boolean {
     return !this.draft?.id;
@@ -53,7 +58,8 @@ export abstract class CrudPage<T extends Entity> {
     this.formOpen.set(false);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
+    if (this.saving()) return;
     this.submitted = true;
     const error = this.validate(this.draft);
     if (error) {
@@ -61,11 +67,17 @@ export abstract class CrudPage<T extends Entity> {
       return;
     }
     const isNew = this.isNew;
-    const saved = this.col.save(this.draft);
-    this.afterSave(saved, isNew);
-    const a = this.femenino ? 'a' : 'o';
-    this.ui.success(`${this.noun} ${isNew ? 'cread' + a : 'actualizad' + a}`, 'Los cambios se guardaron correctamente.');
-    this.formOpen.set(false);
+    this.saving.set(true);
+    try {
+      await this.persist(this.draft);
+      const a = this.femenino ? 'a' : 'o';
+      this.ui.success(`${this.noun} ${isNew ? 'cread' + a : 'actualizad' + a}`, 'Los cambios se guardaron en la base de datos.');
+      this.formOpen.set(false);
+    } catch (err) {
+      this.ui.error('No se pudo guardar', apiError(err));
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   async remove(item: T, label: string): Promise<void> {
@@ -80,12 +92,16 @@ export abstract class CrudPage<T extends Entity> {
       confirmText: 'Eliminar',
     });
     if (!ok) return;
-    this.doRemove(item);
-    const a = this.femenino ? 'a' : 'o';
-    this.ui.success(`${this.noun} eliminad${a}`);
+    try {
+      await this.doRemove(item);
+      const a = this.femenino ? 'a' : 'o';
+      this.ui.success(`${this.noun} eliminad${a}`);
+    } catch (err) {
+      this.ui.error('No se pudo eliminar', apiError(err));
+    }
   }
 
-  protected doRemove(item: T): void {
-    this.col.remove(item.id);
+  protected doRemove(item: T): Promise<void> {
+    return this.col.remove(item.id);
   }
 }

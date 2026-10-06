@@ -111,7 +111,7 @@ import { FechaPipe } from '../shared/pipes';
         </form>
         <ng-container footer>
           <button class="btn" type="button" (click)="close()">Cancelar</button>
-          <button class="btn btn-primary" type="submit" form="f"><app-icon name="check" [size]="16" /> Guardar</button>
+          <button class="btn btn-primary" type="submit" form="f" [disabled]="saving()"><app-icon name="check" [size]="16" /> Guardar</button>
         </ng-container>
       </app-modal>
     }

@@ -1,7 +1,14 @@
 # Talenta RH · Sistema de Reclutamiento y Selección
 
-PWA desarrollada en **Angular 22** para el proyecto final de la asignatura de RH (Universidad APEC).
-Usa datos simulados (mock) que se guardan en el `localStorage` del navegador, así que se puede agregar, editar y eliminar información sin backend.
+Proyecto final de la asignatura de RH (Universidad APEC).
+
+- **Frontend:** PWA en **Angular 22**, desplegada en Vercel.
+- **Backend:** API REST en **Node.js (Express)** en la carpeta [`server/`](server/), desplegada en Render.
+- **Base de datos:** **PostgreSQL** en Render. Las tablas y los datos de demostración se crean solos la primera vez que arranca la API.
+
+```
+Navegador (Angular, Vercel) ──HTTPS + JWT──▶ API Express (Render) ──▶ PostgreSQL (Render)
+```
 
 ## Acceso
 
@@ -10,7 +17,7 @@ Usa datos simulados (mock) que se guardan en el `localStorage` del navegador, as
 | Administrador | admin@talenta.do | admin123 |
 | Reclutador | reclutador@talenta.do | demo123 |
 
-También puedes crear una cuenta desde **Crear cuenta** en la pantalla de inicio (rol Reclutador), o un administrador puede crear usuarios con cualquier rol en **Administración → Usuarios**. Las sesiones y cuentas se guardan en el navegador (demo sin backend; las contraseñas se almacenan como hash SHA-256).
+También se puede crear una cuenta desde **Crear cuenta** (rol Reclutador), y un administrador puede crear usuarios con cualquier rol en **Administración → Usuarios**. Las contraseñas se guardan cifradas con bcrypt y la sesión usa tokens JWT.
 
 ## Módulos
 
@@ -27,13 +34,30 @@ También puedes crear una cuenta desde **Crear cuenta** en la pantalla de inicio
 | Empleados | CRUD (cédula, nombre, fecha de ingreso, departamento, puesto, salario, estado) |
 | Consulta por criterios | Candidatos por puesto, competencias, capacitaciones, idiomas, etapa, salario… y exportación a CSV |
 | Reporte de nuevo ingreso | Empleados por rango de fechas, totales, gráfico mensual, impresión/PDF y CSV |
+| Usuarios | Gestión de cuentas y roles (solo administradores) |
 
-## Desarrollo
+## Base de datos
+
+El esquema está en [`server/src/schema.sql`](server/src/schema.sql): tablas `usuarios`, `competencias`, `idiomas`, `capacitaciones`, `puestos`, `candidatos` (con las tablas puente `candidato_competencias`, `candidato_capacitaciones` y `candidato_idiomas`), `experiencias` y `empleados`, con llaves foráneas y restricciones `CHECK`.
+
+## Desarrollo local
 
 ```bash
+# API
+cd server
+cp .env.example .env      # pon tu DATABASE_URL
 npm install
-npm start        # http://localhost:4200
-npm run build    # dist/syshhrr/browser (incluye service worker)
+npm run dev               # http://localhost:3000/api
+
+# Frontend (en otra terminal, desde la raíz)
+npm install
+npm start                 # http://localhost:4200
 ```
 
-Para volver a los datos iniciales, usa **Restaurar datos** en la barra lateral.
+`npm run db:reset` (en `server/`) vuelve a cargar los datos de RH de demostración sin tocar los usuarios.
+
+## Despliegue
+
+1. **Base de datos:** PostgreSQL en Render.
+2. **API:** Render → *New → Blueprint* con este repositorio (usa [`render.yaml`](render.yaml)). Pega la *Internal Database URL* en `DATABASE_URL` y usa la misma región que la base de datos.
+3. **Frontend:** Vercel despliega solo con cada push a `main`. La URL de la API de producción está en [`src/environments/environment.prod.ts`](src/environments/environment.prod.ts).

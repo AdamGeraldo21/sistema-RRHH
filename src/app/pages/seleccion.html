@@ -130,7 +130,7 @@
     </form>
     <ng-container footer>
       <button class="btn" type="button" (click)="hiring.set(null)">Cancelar</button>
-      <button class="btn btn-primary" type="submit" form="hire" [disabled]="!!hireError"><app-icon name="usercheck" [size]="16" /> Confirmar contratación</button>
+      <button class="btn btn-primary" type="submit" form="hire" [disabled]="!!hireError || saving()"><app-icon name="usercheck" [size]="16" /> Confirmar contratación</button>
     </ng-container>
   </app-modal>
 }

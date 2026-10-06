@@ -206,15 +206,15 @@ export class CandidatosPage extends CrudPage<Candidato> {
     return null;
   }
 
-  protected override afterSave(saved: Candidato): void {
-    this.store.setExperiencias(saved.id, this.exps);
+  protected override persist(c: Candidato): Promise<Candidato> {
+    return this.store.saveCandidato(c, this.exps);
   }
 
   protected override blockRemove(c: Candidato): string | null {
     return c.etapa === 'Contratado' ? 'El candidato ya fue contratado como empleado.' : null;
   }
 
-  protected override doRemove(c: Candidato): void {
-    this.store.removeCandidato(c.id);
+  protected override doRemove(c: Candidato): Promise<void> {
+    return this.store.removeCandidato(c.id);
   }
 }
